@@ -1,6 +1,11 @@
 <?php
 
 // use App\Http\Controllers\UserController;
+
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\TodolistController;
+use App\Http\Middleware\OnlyGuestMiddleware;
+use App\Http\Middleware\OnlyMemberMiddleware;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,14 +19,19 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [HomeController::class, 'home']);
 
-Route::view('/template','template');
+Route::view('/template', 'template');
 
 Route::controller(\App\Http\Controllers\UserController::class)->group(function () {
-    Route::get('/login','login');
-    Route::post('/login','doLogin');
-    Route::post('/logout','doLogout');
+    Route::get('/login', 'login')->middleware(OnlyGuestMiddleware::class);
+    Route::post('/login', 'doLogin')->middleware(OnlyGuestMiddleware::class);
+    Route::post('/logout', 'doLogout')->middleware(OnlyMemberMiddleware::class);
 });
+
+Route::controller(TodolistController::class)
+    ->middleware([OnlyMemberMiddleware::class])->group(function () {
+        Route::get('/todolist', 'todoList');
+        Route::post('/todolist', 'addTodo');
+        Route::post('/todolist/{id}/delete', 'removeTodo');
+    });
